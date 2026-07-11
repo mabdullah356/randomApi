@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const users = await prisma.user.findMany();
+        const users = await prisma.user.findMany({
+            select: {
+                name: true,
+                email: true,
+                avator: true
+            }
+        });
         if (!users) return NextResponse.json({ error: "No users found" }, { status: 404 })
         return NextResponse.json({ message: "Users fetched successfully", status: 200, users })
     } catch (err) {
