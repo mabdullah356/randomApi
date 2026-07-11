@@ -20,9 +20,6 @@ export default function Header() {
                     <Link href="/" className="hover:text-[#f56565] transition-colors font-medium">
                         Home
                     </Link>
-                    <Link href="/" className="hover:text-[#f56565] transition-colors font-medium">
-                        API
-                    </Link>
                     <Link href="/docs" className="hover:text-[#f56565] transition-colors font-medium">
                         Docs
                     </Link>
