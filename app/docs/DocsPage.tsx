@@ -118,6 +118,119 @@ export default function UserCard() {
 }`,
 };
 
+const productCodeSnippets = {
+  fetchBasic: `const res = await fetch("/api/products");
+const data = await res.json();
+
+console.log(data.products[0].name);
+// "Wireless Mouse"`,
+  fetchParams: `const res = await fetch("/api/products?limit=5");
+const data = await res.json();
+
+console.log(data.count);
+// 5`,
+  fetchFull: `async function getProducts(limit) {
+  const params = new URLSearchParams();
+  if (limit) params.set("limit", limit);
+
+  const res = await fetch(\`/api/products?\${params}\`);
+
+  if (!res.ok) {
+    throw new Error(\`HTTP \${res.status}\`);
+  }
+
+  const { products } = await res.json();
+  return products;
+}
+
+// Usage
+const products = await getProducts(3);
+console.log(products[0].name, products[0].price);`,
+  axiosBasic: `import axios from "axios";
+
+const { data } = await axios.get("/api/products");
+
+console.log(data.products[0].name);
+// "Wireless Mouse"`,
+  axiosParams: `import axios from "axios";
+
+const { data } = await axios.get("/api/products", {
+  params: { limit: 5 },
+});
+
+console.log(data.count);
+// 5`,
+  axiosFull: `import axios from "axios";
+
+async function getProducts(limit) {
+  const { data } = await axios.get("/api/products", {
+    params: { limit },
+  });
+  return data.products;
+}
+
+// Usage
+const products = await getProducts(3);
+console.log(products[0].name, products[0].price);`,
+  reactComponent: `"use client";
+
+import { useState, useEffect } from "react";
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  photo: string;
+}
+
+export default function ProductList() {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products?limit=3")
+      .then((r) => r.json())
+      .then((d) => setProducts(d.products));
+  }, []);
+
+  if (!products.length) return <p>Loading...</p>;
+
+  return (
+    <div className="product-list">
+      {products.map((p) => (
+        <div key={p.id} className="product-card">
+          <img src={p.photo} alt={p.name} />
+          <h2>{p.name}</h2>
+          <p>{p.description}</p>
+          <span>\${p.price}</span>
+        </div>
+      ))}
+    </div>
+  );
+}`,
+  jsonResponse: `{
+  "message": "Products fetched successfully",
+  "status": 200,
+  "count": 1,
+  "products": [
+    {
+      "id": 1,
+      "name": "Wireless Mouse",
+      "description": "Ergonomic wireless mouse with adjustable DPI",
+      "price": 29.99,
+      "category": "Electronics",
+      "photo": "https://example.com/mouse.jpg",
+      "createdAt": "2026-07-12T00:00:00.000Z",
+      "updatedAt": "2026-07-12T00:00:00.000Z"
+    }
+  ]
+}`,
+  productErrorJson: `{
+  "error": "Invalid limit. Must be a positive integer."
+}`,
+};
+
 const responseFields = [
   { field: "message", type: "string", description: "Status message" },
   { field: "status", type: "number", description: "HTTP status code" },
@@ -129,6 +242,20 @@ const responseFields = [
   { field: "randomUser.location.state", type: "string", description: "State or region" },
   { field: "randomUser.location.country", type: "string", description: "Country name" },
   { field: "randomUser.avatar", type: "string", description: "Avatar image URL" },
+];
+
+const productResponseFields = [
+  { field: "message", type: "string", description: "Status message" },
+  { field: "status", type: "number", description: "HTTP status code" },
+  { field: "count", type: "number", description: "Number of products returned" },
+  { field: "products[].id", type: "number", description: "Unique product identifier" },
+  { field: "products[].name", type: "string", description: "Product name" },
+  { field: "products[].description", type: "string", description: "Product description" },
+  { field: "products[].price", type: "number", description: "Product price" },
+  { field: "products[].category", type: "string", description: "Product category" },
+  { field: "products[].photo", type: "string", description: "Product photo URL" },
+  { field: "products[].createdAt", type: "string", description: "Creation timestamp" },
+  { field: "products[].updatedAt", type: "string", description: "Last update timestamp" },
 ];
 
 export default function DocsPage() {
@@ -147,6 +274,23 @@ export default function DocsPage() {
         <UsageExamples />
         <ErrorHandling />
         <FAQ />
+      </div>
+
+      <div className="border-t border-slate-200 bg-slate-50/50">
+        <ProductHero />
+        <div className="max-w-4xl mx-auto px-6 pb-24">
+          <ProductTableOfContents />
+          <ProductIntroduction />
+          <ProductBaseUrl />
+          <ProductAuthentication />
+          <ProductEndpoints />
+          <ProductQueryParams />
+          <ProductResponseSchema />
+          <ProductResponseExample />
+          <ProductUsageExamples />
+          <ProductErrorHandling />
+          <ProductFAQ />
+        </div>
       </div>
     </article>
   );
@@ -538,15 +682,393 @@ function FAQ() {
     {
       q: "How unique are the generated users?",
       a: "Each request produces a randomly assembled user. Usernames include a random numeric suffix, but collisions are possible across many requests.",
-    },
-    {
-      q: "What countries are supported?",
-      a: "The location pool includes cities from a wide range of countries. Use the country query parameter to filter, or omit it to get any country.",
-    },
+    }
   ];
 
   return (
     <section id="faq" className="scroll-mt-10 my-12">
+      <SectionHeading icon={<AlertCircle className="w-4 h-4" />}>FAQ</SectionHeading>
+      <div className="space-y-2">
+        {faqs.map((faq, i) => (
+          <details
+            key={i}
+            className="group border border-slate-200 rounded-lg overflow-hidden"
+          >
+            <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-slate-700 flex items-center justify-between hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden list-none">
+              {faq.q}
+              <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 ml-3 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="px-5 pb-4 text-sm text-slate-500 leading-relaxed">{faq.a}</div>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── Product Sections ─────────────────────────────────── */
+
+function ProductHero() {
+  return (
+    <section className="border-b border-slate-100">
+      <div className="max-w-4xl mx-auto px-6 pt-20 pb-14">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full">
+            <Zap className="w-3 h-3" />
+            API Reference
+          </span>
+          <span className="bg-slate-100 text-slate-500 text-[11px] font-mono px-2 py-0.5 rounded">
+            v1.0.0
+          </span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
+          Random Products API
+        </h1>
+        <p className="text-lg text-slate-500 max-w-xl leading-relaxed mb-6">
+          Generate realistic random product data for e-commerce testing, prototyping, and development.
+          Free, no authentication required.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "REST", color: "bg-emerald-50 text-emerald-700 ring-emerald-600/10" },
+            { label: "JSON", color: "bg-violet-50 text-violet-700 ring-violet-600/10" },
+            { label: "No Auth", color: "bg-amber-50 text-amber-700 ring-amber-600/10" },
+          ].map((tag) => (
+            <span
+              key={tag.label}
+              className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ring-1 ring-inset ${tag.color}`}
+            >
+              {tag.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductTableOfContents() {
+  const links = [
+    ["#product-introduction", "Introduction"],
+    ["#product-base-url", "Base URL"],
+    ["#product-authentication", "Authentication"],
+    ["#product-endpoints", "Endpoints"],
+    ["#product-query-parameters", "Query Parameters"],
+    ["#product-response-schema", "Response Schema"],
+    ["#product-response-example", "Response Example"],
+    ["#product-usage", "Usage Examples"],
+    ["#product-error-handling", "Error Handling"],
+    ["#product-faq", "FAQ"],
+  ] as const;
+
+  return (
+    <nav className="my-10 bg-slate-50 border border-slate-200 rounded-xl p-5" aria-label="Page navigation">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+        On this page
+      </h2>
+      <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1.5">
+        {links.map(([href, label]) => (
+          <li key={href}>
+            <a href={href} className="text-sm text-slate-600 hover:text-blue-600 transition-colors">
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function ProductIntroduction() {
+  return (
+    <Section id="product-introduction" title="Introduction" icon={<Zap className="w-4 h-4" />}>
+      <p>
+        The <strong className="text-slate-900">Random Products API</strong> is a free RESTful
+        endpoint that returns randomly generated product objects. It is built for developers who
+        need realistic placeholder data for e-commerce UI mockups, automated testing, and demos.
+      </p>
+      <p>
+        Each response contains a complete product: name, description, price, category,
+        and a photo URL — all assembled from a curated product pool.
+      </p>
+    </Section>
+  );
+}
+
+function ProductBaseUrl() {
+  return (
+    <Section id="product-base-url" title="Base URL" icon={<Globe className="w-4 h-4" />}>
+      <CodeBlock
+        language="bash"
+        code="https://your-domain.com/api/products"
+        title="Endpoint"
+      />
+    </Section>
+  );
+}
+
+function ProductAuthentication() {
+  return (
+    <Section id="product-authentication" title="Authentication" icon={<Key className="w-4 h-4" />}>
+      <p>
+        This API is <strong className="text-slate-900">completely public</strong>. No API key,
+        token, or header is required. Just send a GET request and receive random products.
+      </p>
+    </Section>
+  );
+}
+
+function ProductEndpoints() {
+  return (
+    <Section id="product-endpoints" title="Endpoints" icon={<Database className="w-4 h-4" />}>
+      <div className="border border-slate-200 rounded-lg overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-50">
+          <MethodBadge method="GET" />
+          <code className="text-sm font-mono text-slate-700">/api/products</code>
+          <span className="text-xs text-slate-400 ml-auto hidden sm:block">
+            Returns random products
+          </span>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+function ProductQueryParams() {
+  const params = [
+    {
+      name: "limit",
+      type: "number",
+      desc: "Limit the number of products returned.",
+      values: ["1", "3", "5", "10", "..."],
+    },
+  ];
+
+  return (
+    <Section id="product-query-parameters" title="Query Parameters" icon={<Code className="w-4 h-4" />}>
+      <p className="mb-4">
+        All parameters are optional. When omitted, the API returns all available products.
+      </p>
+
+      <div className="space-y-3 mb-5">
+        {params.map((p) => (
+          <div key={p.name} className="border border-slate-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <code className="text-sm font-mono font-semibold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                {p.name}
+              </code>
+              <span className="text-[11px] font-mono text-slate-400">{p.type}</span>
+              <span className="text-[10px] text-slate-400 bg-slate-100 rounded px-1.5 py-0.5 ml-auto">
+                optional
+              </span>
+            </div>
+            <p className="text-sm text-slate-500 mb-2.5">{p.desc}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {p.values.map((v) => (
+                <span
+                  key={v}
+                  className="text-xs font-mono text-slate-600 bg-slate-100 rounded px-2 py-0.5"
+                >
+                  {v}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+        Example Requests
+      </p>
+      <div className="space-y-2">
+        <CodeBlock language="bash" code="/api/products" />
+        <CodeBlock language="bash" code="/api/products?limit=3" />
+        <CodeBlock language="bash" code="/api/products?limit=10" />
+      </div>
+    </Section>
+  );
+}
+
+function ProductResponseSchema() {
+  return (
+    <Section id="product-response-schema" title="Response Schema" icon={<FileJson className="w-4 h-4" />}>
+      <p className="mb-4">The response body has the following structure:</p>
+      <div className="border border-slate-200 rounded-lg overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                Field
+              </th>
+              <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                Type
+              </th>
+              <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {productResponseFields.map((f) => (
+              <tr key={f.field} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-4 py-2.5">
+                  <code className="text-xs font-mono text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
+                    {f.field}
+                  </code>
+                </td>
+                <td className="px-4 py-2.5 text-xs font-mono text-slate-400">{f.type}</td>
+                <td className="px-4 py-2.5 text-xs text-slate-500">{f.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Section>
+  );
+}
+
+function ProductResponseExample() {
+  return (
+    <Section id="product-response-example" title="Response Example" icon={<FileJson className="w-4 h-4" />}>
+      <p className="mb-4">
+        A successful request returns a <StatusBadge code={200} /> response:
+      </p>
+      <CodeBlock language="json" code={productCodeSnippets.jsonResponse} title="Response Body" />
+    </Section>
+  );
+}
+
+function ProductUsageExamples() {
+  const [tab, setTab] = useState<"fetch" | "axios" | "react">("fetch");
+
+  const tabs = [
+    { id: "fetch" as const, label: "Fetch" },
+    { id: "axios" as const, label: "Axios" },
+    { id: "react" as const, label: "React" },
+  ];
+
+  const sections = {
+    fetch: [
+      { title: "Basic Request", code: productCodeSnippets.fetchBasic },
+      { title: "With Limit Parameter", code: productCodeSnippets.fetchParams },
+      { title: "Full Example with Error Handling", code: productCodeSnippets.fetchFull },
+    ],
+    axios: [
+      { title: "Basic Request", code: productCodeSnippets.axiosBasic },
+      { title: "With Limit Parameter", code: productCodeSnippets.axiosParams },
+      { title: "Full Example with Error Handling", code: productCodeSnippets.axiosFull },
+    ],
+    react: [{ title: "React Component", code: productCodeSnippets.reactComponent }],
+  };
+
+  return (
+    <section id="product-usage" className="scroll-mt-10 my-12">
+      <SectionHeading icon={<Code className="w-4 h-4" />}>Usage Examples</SectionHeading>
+      <p className="text-sm text-slate-500 mb-5">
+        Copy-paste ready code for the most common integration patterns.
+      </p>
+
+      <div className="border border-slate-200 rounded-xl overflow-hidden">
+        <div className="flex border-b border-slate-200 bg-slate-50">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-5 py-3 text-sm font-medium transition-colors cursor-pointer border-b-2 ${
+                tab === t.id
+                  ? "text-blue-600 border-blue-600 bg-white"
+                  : "text-slate-400 border-transparent hover:text-slate-600"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {sections[tab].map((s) => (
+            <div key={s.title} className="p-5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                {s.title}
+              </h4>
+              <CodeBlock language={tab === "react" ? "tsx" : "javascript"} code={s.code} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductErrorHandling() {
+  return (
+    <Section id="product-error-handling" title="Error Handling" icon={<AlertCircle className="w-4 h-4" />}>
+      <p className="mb-4">
+        The API uses standard HTTP status codes. On failure, the response includes an{" "}
+        <code className="text-sm font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
+          error
+        </code>{" "}
+        field.
+      </p>
+
+      <div className="border border-slate-200 rounded-lg overflow-x-auto mb-5">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                Status
+              </th>
+              <th className="text-left px-4 py-2.5 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                Meaning
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            <tr>
+              <td className="px-4 py-2.5">
+                <StatusBadge code={200} />
+              </td>
+              <td className="px-4 py-2.5 text-xs text-slate-500">Success — products returned</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2.5">
+                <StatusBadge code={400} />
+              </td>
+              <td className="px-4 py-2.5 text-xs text-slate-500">Bad request — invalid limit parameter</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2.5">
+                <StatusBadge code={500} />
+              </td>
+              <td className="px-4 py-2.5 text-xs text-slate-500">Internal server error</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <CodeBlock language="json" code={productCodeSnippets.productErrorJson} title="Error Response" />
+    </Section>
+  );
+}
+
+function ProductFAQ() {
+  const faqs = [
+    {
+      q: "Is this API free?",
+      a: "Yes. Completely free, no API key required.",
+    },
+    {
+      q: "Can I use this in production?",
+      a: "It is primarily designed for development, testing, and prototyping. The data is randomly generated and not real.",
+    },
+    {
+      q: "How are products generated?",
+      a: "Each request randomly selects products from the database. You can limit the number of results using the limit query parameter.",
+    }
+  ];
+
+  return (
+    <section id="product-faq" className="scroll-mt-10 my-12">
       <SectionHeading icon={<AlertCircle className="w-4 h-4" />}>FAQ</SectionHeading>
       <div className="space-y-2">
         {faqs.map((faq, i) => (
