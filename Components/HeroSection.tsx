@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Copy, Check, ArrowRight, Zap, Globe, Database, Sparkles } from "lucide-react";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
 interface RandomUser {
     name: string;
     email: string;
@@ -39,7 +41,7 @@ export default function HeroSection() {
     const fetchUser = async () => {
         setLoading(true);
         try {
-            const res = await fetch("/api/users");
+            const res = await fetch(`${BASE_URL}/api/users`);
             const data = await res.json();
             setUser(data.randomUser);
         } catch {
@@ -52,7 +54,7 @@ export default function HeroSection() {
     const fetchProducts = async () => {
         setProductsLoading(true);
         try {
-            const res = await fetch("/api/products?limit=3");
+            const res = await fetch(`${BASE_URL}/api/products?limit=3`);
             const data = await res.json();
             setProducts(data.products);
         } catch {
@@ -63,13 +65,13 @@ export default function HeroSection() {
     };
 
     const copyEndpoint = () => {
-        navigator.clipboard.writeText("/api/users");
+        navigator.clipboard.writeText(`${BASE_URL}/api/users`);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
     const copyProductsEndpoint = () => {
-        navigator.clipboard.writeText("/api/products?limit=3");
+        navigator.clipboard.writeText(`${BASE_URL}/api/products?limit=3`);
         setProductsCopied(true);
         setTimeout(() => setProductsCopied(false), 2000);
     };
@@ -118,7 +120,7 @@ export default function HeroSection() {
                     onClick={copyEndpoint}
                     className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-700 px-5 py-3 rounded-lg text-sm font-mono hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                    <code>/api/users</code>
+                    <code>{`${BASE_URL}/api/users`}</code>
                     {copied ? (
                         <Check className="w-4 h-4 text-emerald-500" />
                     ) : (
@@ -142,7 +144,7 @@ export default function HeroSection() {
                                 GET
                             </span>
                             <code className="text-sm font-mono text-slate-600">
-                                /api/users
+                                {`${BASE_URL}/api/users`}
                             </code>
                         </div>
                         <button
@@ -261,7 +263,7 @@ export default function HeroSection() {
                         onClick={copyProductsEndpoint}
                         className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-700 px-5 py-3 rounded-lg text-sm font-mono hover:bg-slate-100 transition-colors cursor-pointer"
                     >
-                        <code>/api/products?limit=3</code>
+                        <code>{`${BASE_URL}/api/products?limit=3`}</code>
                         {productsCopied ? (
                             <Check className="w-4 h-4 text-emerald-500" />
                         ) : (
@@ -285,7 +287,7 @@ export default function HeroSection() {
                                     GET
                                 </span>
                                 <code className="text-sm font-mono text-slate-600">
-                                    /api/products?limit=3
+                                    {`${BASE_URL}/api/products?limit=3`}
                                 </code>
                             </div>
                             <button

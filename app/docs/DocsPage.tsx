@@ -5,15 +5,15 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Check, ChevronDown, Zap, Globe, Key, Database, Code, AlertCircle, FileJson } from "lucide-react";
 
-const BASE_URL = "/api/users";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 const codeSnippets = {
-  fetchBasic: `const res = await fetch("/api/users");
+  fetchBasic: `const res = await fetch(\`\${BASE_URL}/api/users\`);
 const data = await res.json();
 
 console.log(data.randomUser.name);
 // "Eleanor Wilson"`,
-  fetchParams: `const res = await fetch("/api/users?gender=MALE&country=Greece");
+  fetchParams: `const res = await fetch(\`\${BASE_URL}/api/users?gender=MALE&country=Greece\`);
 const data = await res.json();
 
 console.log(data.randomUser);`,
@@ -22,7 +22,7 @@ console.log(data.randomUser);`,
   if (gender) params.set("gender", gender);
   if (country) params.set("country", country);
 
-  const res = await fetch(\`/api/users?\${params}\`);
+  const res = await fetch(\`\${BASE_URL}/api/users?\${params}\`);
 
   if (!res.ok) {
     throw new Error(\`HTTP \${res.status}\`);
@@ -37,13 +37,13 @@ const user = await getRandomUser("MALE", "Greece");
 console.log(user.name, user.email);`,
   axiosBasic: `import axios from "axios";
 
-const { data } = await axios.get("/api/users");
+const { data } = await axios.get(\`\${BASE_URL}/api/users\`);
 
 console.log(data.randomUser.name);
 // "Eleanor Wilson"`,
   axiosParams: `import axios from "axios";
 
-const { data } = await axios.get("/api/users", {
+const { data } = await axios.get(\`\${BASE_URL}/api/users\`, {
   params: { gender: "MALE", country: "Greece" },
 });
 
@@ -51,7 +51,7 @@ console.log(data.randomUser);`,
   axiosFull: `import axios from "axios";
 
 async function getRandomUser(gender, country) {
-  const { data } = await axios.get("/api/users", {
+  const { data } = await axios.get(\`\${BASE_URL}/api/users\`, {
     params: { gender, country },
   });
   return data.randomUser;
@@ -81,7 +81,7 @@ export default function UserCard() {
   const [user, setUser] = useState<RandomUser | null>(null);
 
   useEffect(() => {
-    fetch("/api/users")
+    fetch(\`\${BASE_URL}/api/users\`)
       .then((r) => r.json())
       .then((d) => setUser(d.randomUser));
   }, []);
@@ -119,12 +119,12 @@ export default function UserCard() {
 };
 
 const productCodeSnippets = {
-  fetchBasic: `const res = await fetch("/api/products");
+  fetchBasic: `const res = await fetch(\`\${BASE_URL}/api/products\`);
 const data = await res.json();
 
 console.log(data.products[0].name);
 // "Wireless Mouse"`,
-  fetchParams: `const res = await fetch("/api/products?limit=5");
+  fetchParams: `const res = await fetch(\`\${BASE_URL}/api/products?limit=5\`);
 const data = await res.json();
 
 console.log(data.count);
@@ -133,7 +133,7 @@ console.log(data.count);
   const params = new URLSearchParams();
   if (limit) params.set("limit", limit);
 
-  const res = await fetch(\`/api/products?\${params}\`);
+  const res = await fetch(\`\${BASE_URL}/api/products?\${params}\`);
 
   if (!res.ok) {
     throw new Error(\`HTTP \${res.status}\`);
@@ -148,13 +148,13 @@ const products = await getProducts(3);
 console.log(products[0].name, products[0].price);`,
   axiosBasic: `import axios from "axios";
 
-const { data } = await axios.get("/api/products");
+const { data } = await axios.get(\`\${BASE_URL}/api/products\`);
 
 console.log(data.products[0].name);
 // "Wireless Mouse"`,
   axiosParams: `import axios from "axios";
 
-const { data } = await axios.get("/api/products", {
+const { data } = await axios.get(\`\${BASE_URL}/api/products\`, {
   params: { limit: 5 },
 });
 
@@ -163,7 +163,7 @@ console.log(data.count);
   axiosFull: `import axios from "axios";
 
 async function getProducts(limit) {
-  const { data } = await axios.get("/api/products", {
+  const { data } = await axios.get(\`\${BASE_URL}/api/products\`, {
     params: { limit },
   });
   return data.products;
@@ -189,7 +189,7 @@ export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetch("/api/products?limit=3")
+    fetch(\`\${BASE_URL}/api/products?limit=3\`)
       .then((r) => r.json())
       .then((d) => setProducts(d.products));
   }, []);
@@ -396,7 +396,7 @@ function BaseUrl() {
     <Section id="base-url" title="Base URL" icon={<Globe className="w-4 h-4" />}>
       <CodeBlock
         language="bash"
-        code="https://your-domain.com/api/users"
+        code={`${BASE_URL}/api/users`}
         title="Endpoint"
       />
     </Section>
@@ -424,7 +424,7 @@ function Endpoints() {
       <div className="border border-slate-200 rounded-lg overflow-hidden">
         <div className="flex items-center gap-3 px-4 py-3 bg-slate-50">
           <MethodBadge method="GET" />
-          <code className="text-sm font-mono text-slate-700">/api/users</code>
+          <code className="text-sm font-mono text-slate-700">{`${BASE_URL}/api/users`}</code>
           <span className="text-xs text-slate-400 ml-auto hidden sm:block">
             Returns a single random user
           </span>
@@ -800,7 +800,7 @@ function ProductBaseUrl() {
     <Section id="product-base-url" title="Base URL" icon={<Globe className="w-4 h-4" />}>
       <CodeBlock
         language="bash"
-        code="https://your-domain.com/api/products"
+        code={`${BASE_URL}/api/products`}
         title="Endpoint"
       />
     </Section>
@@ -824,7 +824,7 @@ function ProductEndpoints() {
       <div className="border border-slate-200 rounded-lg overflow-hidden">
         <div className="flex items-center gap-3 px-4 py-3 bg-slate-50">
           <MethodBadge method="GET" />
-          <code className="text-sm font-mono text-slate-700">/api/products</code>
+          <code className="text-sm font-mono text-slate-700">{`${BASE_URL}/api/products`}</code>
           <span className="text-xs text-slate-400 ml-auto hidden sm:block">
             Returns random products
           </span>
@@ -881,9 +881,9 @@ function ProductQueryParams() {
         Example Requests
       </p>
       <div className="space-y-2">
-        <CodeBlock language="bash" code="/api/products" />
-        <CodeBlock language="bash" code="/api/products?limit=3" />
-        <CodeBlock language="bash" code="/api/products?limit=10" />
+        <CodeBlock language="bash" code={`${BASE_URL}/api/products`} />
+        <CodeBlock language="bash" code={`${BASE_URL}/api/products?limit=3`} />
+        <CodeBlock language="bash" code={`${BASE_URL}/api/products?limit=10`} />
       </div>
     </Section>
   );
